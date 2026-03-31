@@ -1,245 +1,178 @@
-# 📋 TaskBot — Командный менеджер задач в Telegram
+# 🤖 TaskBot
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![pyTelegramBotAPI](https://img.shields.io/badge/pyTelegramBotAPI-4.x-blue?logo=telegram)
-![Flask](https://img.shields.io/badge/Flask-3.x-lightgrey?logo=flask)
-![SQLite](https://img.shields.io/badge/SQLite-3-blue?logo=sqlite)
-![APScheduler](https://img.shields.io/badge/APScheduler-3.x-green)
-![Docker](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
+![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey?logo=sqlite)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Telegram-бот для управления командными задачами с веб-дашбордом, дедлайнами и напоминаниями. Написан на `pyTelegramBotAPI` + `Flask`, хранит данные в `SQLite3`, разворачивается через `Docker`.
+Телеграм-бот для управления задачами с веб-дашбордом на Flask.  
+Принимает задачи через Telegram, хранит в SQLite, управляется через браузер.
 
 ---
 
-## ✨ Возможности
+## ✨ Фичи
 
-| Функция | Описание |
+| Возможность | Детали |
 |---|---|
-| ➕ Добавление задач | 4-шаговый FSM-диалог: текст → категория → ответственный → дедлайн |
-| 📋 Просмотр задач | Фильтрация по статусу, inline-кнопки управления |
-| 🔄 Смена статуса | `новое` → `в работе` → `выполнено` / `отменено` |
-| 👤 Назначение | Указать ответственного через @username |
-| 📅 Дедлайны | Хранение дедлайна, визуальное предупреждение о просрочке |
-| ⏰ Напоминания | APScheduler отправляет уведомление за 60 минут до дедлайна |
-| 📥 Экспорт CSV | Выгрузка задач с фильтрацией по категории |
-| 📊 Статистика | Распределение задач по статусам и категориям |
-| 🌐 Веб-дашборд | Flask-интерфейс с фильтрами, поиском и Basic Auth |
-| 🔒 Авторизация | Белый список пользователей, роль администратора |
-| 🐳 Docker | `docker-compose` с двумя сервисами: бот + веб |
+| 📥 Приём задач | Пользователь отправляет текст — бот сохраняет |
+| 🔘 Смена статуса | Inline-кнопки: новая → в работе → готово |
+| 🌐 Веб-дашборд | Flask + Basic Auth, фильтрация, поиск |
+| ⚡ Без перезагрузки | Смена статуса и удаление через AJAX |
+| 🔔 Toast-уведомления | Мгновенный фидбек в интерфейсе |
+| 🐳 Docker | Запуск одной командой |
+| 🔒 Безопасность | Токен и БД не попадают в репозиторий |
 
 ---
 
-## 🖥️ Скриншоты
-
-<table>
-  <tr>
-    <td><b>Главное меню</b></td>
-    <td><b>Добавление задачи</b></td>
-    <td><b>Список задач</b></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screens/start.png" width="250"/></td>
-    <td><img src="docs/screens/add.png" width="250"/></td>
-    <td><img src="docs/screens/list.png" width="250"/></td>
-  </tr>
-</table>
-
-> Скриншоты размещаются в папке `docs/screens/`
-
----
-
-## 🗂️ Структура проекта
+## 🗂 Структура проекта
 
 ```
-taskbot/
-├── bot.py                  # Бот: команды, FSM, callback-обработчики
-├── main.py                 # Точка входа: polling + планировщик + (опц.) веб
-├── config.py               # Настройки из .env
-├── database/
-│   └── db.py               # Все операции с SQLite3
-├── scheduler/
-│   └── reminders.py        # APScheduler: напоминания о дедлайнах
-├── web/
-│   ├── main.py             # Flask-приложение (дашборд)
-│   └── templates/
-│       └── index.html      # Bootstrap 5 интерфейс
-├── data/
-│   └── tasks.db            # SQLite база данных (создаётся автоматически)
-├── .env.example            # Пример переменных окружения
+TaskBot/
+├── Dockerfile              # Образ для bot и web
+├── docker-compose.yml      # Два сервиса + shared volume
+├── main.py                 # Точка входа бота
+├── bot.py                  # Обработчики команд и callback'ов
+├── requirements.txt        # 4 зависимости
+├── .env                    # Секреты (не в git)
+├── .env.example            # Шаблон переменных окружения
 ├── .gitignore
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
+└── web/
+    ├── main.py             # Flask-приложение с Basic Auth и API
+    └── templates/
+        └── index.html      # Тёмный интерфейс дашборда
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## 🏗 Архитектура
 
-### Локально (без Docker)
-
-**1. Клонировать репозиторий**
-```bash
-git clone https://github.com/KirillTomenko/taskbot.git
-cd taskbot
 ```
-
-**2. Создать и активировать виртуальное окружение**
-```bash
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# Linux / macOS
-source .venv/bin/activate
+Telegram API
+    │
+    ▼
+┌─────────────┐    SQLite (Docker volume)    ┌─────────────┐
+│  bot         │ ◄──────────────────────────► │  web         │
+│  (main.py)   │        tasks.db             │  (Flask)     │
+└─────────────┘                              └─────────────┘
+                                                    │
+                                             Basic Auth
+                                                    │
+                                             ┌──────▼──────┐
+                                             │   Browser    │
+                                             │  :5000       │
+                                             └─────────────┘
 ```
-
-**3. Установить зависимости**
-```bash
-pip install -r requirements.txt
-```
-
-**4. Настроить переменные окружения**
-```bash
-cp .env.example .env
-# Отредактируйте .env — укажите токен бота
-```
-
-**5. Запустить**
-```bash
-# Только бот + планировщик
-python main.py
-
-# Бот + планировщик + веб-дашборд
-python main.py --with-web
-```
-
-### Через Docker
-
-```bash
-cp .env.example .env
-# Укажите токен в .env
-
-docker-compose up -d
-```
-
-Веб-дашборд будет доступен на `http://localhost:5000`
 
 ---
 
-## ⚙️ Конфигурация
+## 🐳 Запуск через Docker (рекомендуется)
 
-Скопируйте `.env.example` в `.env` и заполните:
+### 1. Клонировать репозиторий
+
+```bash
+git clone https://github.com/KirillTomenko/TaskBot.git
+cd TaskBot
+```
+
+### 2. Создать `.env` из шаблона
+
+```bash
+cp .env.example .env
+```
+
+Заполнить `.env`:
 
 ```env
-# Обязательно
-BOT_TOKEN=ваш_токен_от_BotFather
+BOT_TOKEN=your_telegram_bot_token
+ADMIN_LOGIN=admin
+ADMIN_PASSWORD=your_password
+DB_PATH=/app/data/tasks.db
+```
 
-# Белый список (через запятую). Пусто = доступ для всех
-ALLOWED_USERS=username1,username2
+### 3. Запустить
 
-# Администраторы (могут удалять задачи)
-ADMIN_USERS=your_username
+```bash
+docker-compose up --build -d
+```
 
-# Напоминания — за сколько минут до дедлайна
-REMINDER_BEFORE_MINUTES=60
+Бот запустится автоматически. Дашборд доступен на `http://localhost:5000`.
 
-# Веб-дашборд
-WEB_HOST=0.0.0.0
-WEB_PORT=5000
-WEB_USER=admin
-WEB_PASSWORD=changeme
+### Полезные команды
 
-# Путь к базе данных
-DB_PATH=data/tasks.db
+```bash
+docker-compose logs -f           # все логи в реальном времени
+docker-compose logs -f bot       # только бот
+docker-compose logs -f web       # только дашборд
+docker-compose down              # остановить (данные сохраняются)
+docker-compose down -v           # остановить + удалить БД
+docker volume ls                 # проверить volume
+```
+
+### Бэкап базы данных
+
+```bash
+docker run --rm \
+  -v taskbot_data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/db_backup.tar.gz /data
 ```
 
 ---
 
-## 🤖 Команды бота
+## 💻 Запуск без Docker
 
-| Команда | Описание |
-|---|---|
-| `/start` | Приветствие и список команд |
-| `/add` | Добавить новую задачу (4 шага) |
-| `/list` | Просмотр задач с фильтрацией по статусу |
-| `/list_csv` | Выгрузить задачи в CSV-файл |
-| `/stats` | Статистика по статусам и категориям |
-| `/cancel` | Отменить текущий диалог |
-| `/help` | Справка |
+```bash
+pip install -r requirements.txt
+cp .env.example .env  # заполнить токен и пароль
 
----
+# Терминал 1 — бот
+python main.py
 
-## 🗄️ Схема базы данных
-
-```sql
-CREATE TABLE tasks (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    text          TEXT    NOT NULL,
-    user          TEXT    NOT NULL,        -- username автора
-    user_id       INTEGER NOT NULL,        -- Telegram ID автора
-    chat_id       INTEGER NOT NULL,        -- для отправки напоминаний
-    assignee      TEXT    DEFAULT NULL,    -- username ответственного
-    status        TEXT    NOT NULL DEFAULT 'new',
-    category      TEXT    NOT NULL DEFAULT 'other',
-    deadline      TEXT    DEFAULT NULL,    -- YYYY-MM-DD HH:MM
-    reminder_sent INTEGER NOT NULL DEFAULT 0,
-    created_at    TEXT    NOT NULL,
-    updated_at    TEXT    NOT NULL
-);
+# Терминал 2 — дашборд
+python web/main.py
 ```
 
 ---
 
-## 🏗️ Архитектура
+## 🗃 База данных
 
-```
-Пользователь (Telegram)
-        │
-        ▼
-  pyTelegramBotAPI (polling)
-        │
-   ┌────┴─────┐
-   │  bot.py  │  ← FSM (user_states dict), callback-обработчики
-   └────┬─────┘
-        │
-   ┌────▼──────┐        ┌──────────────┐
-   │   db.py   │        │ reminders.py │ ← APScheduler (60 сек)
-   │  SQLite3  │◄───────┤              │
-   └────┬──────┘        └──────────────┘
-        │
-   ┌────▼──────┐
-   │  Flask    │  ← веб-дашборд (опционально)
-   │ dashboard │
-   └───────────┘
-```
+Таблица `tasks`:
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `id` | INTEGER PK | Автоинкремент |
+| `user_id` | INTEGER | Telegram user ID |
+| `username` | TEXT | @username |
+| `text` | TEXT | Текст задачи |
+| `status` | TEXT | `new` / `in_progress` / `done` |
+| `created_at` | DATETIME | Время создания |
+
+---
+
+## ⚙️ Переменные окружения
+
+| Переменная | Описание | Обязательная |
+|---|---|---|
+| `BOT_TOKEN` | Токен от @BotFather | ✅ |
+| `ADMIN_LOGIN` | Логин для дашборда | ✅ |
+| `ADMIN_PASSWORD` | Пароль для дашборда | ✅ |
+| `DB_PATH` | Путь к SQLite файлу | ✅ в Docker |
 
 ---
 
 ## 📦 Зависимости
 
 ```
-pyTelegramBotAPI>=4.14
-flask>=3.0
-apscheduler>=3.10
-python-dotenv>=1.0
+pyTelegramBotAPI
+flask
+python-dotenv
+flask-httpauth
 ```
 
 ---
 
-## 🛠️ Стек технологий
+## 📄 Лицензия
 
-- **Python 3.10+** — основной язык
-- **pyTelegramBotAPI** — Telegram Bot API, без зависимости от pydantic/Rust
-- **SQLite3** — встроенная БД, без внешнего сервера
-- **APScheduler** — планировщик напоминаний в фоновом потоке
-- **Flask + Bootstrap 5** — веб-дашборд
-- **Docker + docker-compose** — контейнеризация
-
----
-
-## 📝 Лицензия
-
-MIT © 2026 [Ваше имя](https://github.com/KirillTomenko)
+MIT
