@@ -53,15 +53,15 @@ Telegram API
     │
     ▼
 ┌─────────────┐    SQLite (Docker volume)    ┌─────────────┐
-│  bot         │ ◄──────────────────────────► │  web         │
-│  (main.py)   │        tasks.db             │  (Flask)     │
+│  bot        │ ◄──────────────────────────► │    web      │
+│  (main.py)  │        tasks.db              │  (Flask)    │
 └─────────────┘                              └─────────────┘
                                                     │
                                              Basic Auth
                                                     │
                                              ┌──────▼──────┐
-                                             │   Browser    │
-                                             │  :5000       │
+                                             │   Browser   │
+                                             │    :8000    │
                                              └─────────────┘
 ```
 
@@ -97,7 +97,7 @@ DB_PATH=/app/data/tasks.db
 docker-compose up --build -d
 ```
 
-Бот запустится автоматически. Дашборд доступен на `http://localhost:5000`.
+Бот запустится автоматически. Дашборд доступен на `http://localhost:8000`.
 
 ### Полезные команды
 
