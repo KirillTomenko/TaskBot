@@ -33,6 +33,9 @@ def require_auth(f):
 def index():
     status   = request.args.get("status")   or None
     category = request.args.get("category") or None
+    if status == "all":   status = None
+    if category == "all": category = None
+    
     search   = request.args.get("search",  "").strip()
 
     tasks = db.get_tasks(status=status, category=category)
@@ -81,3 +84,6 @@ def api_delete():
         return jsonify({"ok": False, "error": "missing task_id"}), 400
     ok = db.delete_task(int(task_id))
     return jsonify({"ok": ok})
+if __name__ == "__main__":
+    from config import WEB_HOST, WEB_PORT
+    app.run(host=WEB_HOST, port=WEB_PORT)

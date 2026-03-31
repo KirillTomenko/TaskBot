@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   bot:
     build: .
@@ -15,10 +13,12 @@ services:
     container_name: taskbot_web
     command: python web/main.py
     env_file: .env
+    environment:
+      - PYTHONPATH=/app
     volumes:
       - taskbot_data:/app/data
     ports:
-      - "5000:5000"
+      - "8000:8000"
     restart: unless-stopped
 
 volumes:

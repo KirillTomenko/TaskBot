@@ -60,6 +60,9 @@
     /* ── Empty state ── */
     .empty-state { padding: 4rem 0; text-align: center; color: #aaa; }
     .empty-state i { font-size: 3rem; }
+
+    /* ── Status buttons ── */
+    .status-btn { font-size: .72rem; padding: .2rem .55rem; }
   </style>
 </head>
 <body>
@@ -106,18 +109,18 @@
       <div class="col-6 col-md-3">
         <label class="form-label fw-semibold small mb-1">📌 Статус</label>
         <select name="status" class="form-select form-select-sm">
-          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Все статусы</option>
+          <option value="all" {% if sel_status == 'all' %}selected{% endif %}>Все статусы</option>
           {% for key, label in statuses.items() %}
-          <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ label }}</option>
+          <option value="{{ key }}" {% if sel_status == key %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="col-6 col-md-3">
         <label class="form-label fw-semibold small mb-1">📂 Категория</label>
         <select name="category" class="form-select form-select-sm">
-          <option value="all" {% if category_filter == 'all' %}selected{% endif %}>Все категории</option>
+          <option value="all" {% if sel_category == 'all' %}selected{% endif %}>Все категории</option>
           {% for key, label in categories.items() %}
-          <option value="{{ key }}" {% if category_filter == key %}selected{% endif %}>{{ label }}</option>
+          <option value="{{ key }}" {% if sel_category == key %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
@@ -139,6 +142,8 @@
     {% set dl = task['deadline'] %}
     <div class="col-12 col-lg-6">
       <div class="task-card card p-3 h-100">
+
+        <!-- Header -->
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
             <span class="task-id">TASK #{{ task['id'] }}</span>
@@ -149,8 +154,10 @@
           </span>
         </div>
 
+        <!-- Text -->
         <div class="task-text mb-2">{{ task['text'] }}</div>
 
+        <!-- Meta -->
         <div class="task-meta d-flex flex-wrap gap-2 mt-auto">
           <span><i class="bi bi-person-fill me-1"></i>@{{ task['user'] }}</span>
           {% if task['assignee'] %}
@@ -159,6 +166,7 @@
           <span><i class="bi bi-clock me-1"></i>{{ task['created_at'][:16] }}</span>
         </div>
 
+        <!-- Deadline -->
         {% if dl %}
         {% set now_str = now_iso if now_iso is defined else '' %}
         <div class="mt-2 small
@@ -169,6 +177,23 @@
           {% endif %}
         </div>
         {% endif %}
+
+        <!-- Actions -->
+        <div class="d-flex flex-wrap gap-1 mt-3 align-items-center">
+          {% for key, label in statuses.items() %}
+          {% if key != task['status'] %}
+          <button class="btn btn-outline-secondary btn-sm status-btn"
+                  data-task-id="{{ task['id'] }}"
+                  data-status="{{ key }}">
+            {{ label }}
+          </button>
+          {% endif %}
+          {% endfor %}
+          <button class="btn btn-outline-danger btn-sm ms-auto delete-btn"
+                  data-task-id="{{ task['id'] }}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
 
       </div>
     </div>
@@ -189,5 +214,70 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Смена статуса
+  document.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const taskId = btn.dataset.taskId;
+      const status = btn.dataset.status;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/status', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({task_id: taskId, status: status})
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast('Статус обновлён ✅');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Ошибка при обновлении ❌', 'danger');
+          btn.disabled = false;
+        }
+      } catch (e) {
+        showToast('Ошибка соединения ❌', 'danger');
+        btn.disabled = false;
+      }
+    });
+  });
+
+  // Удаление
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Удалить задачу?')) return;
+      const taskId = btn.dataset.taskId;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({task_id: taskId})
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast('Задача удалена 🗑️');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Ошибка при удалении ❌', 'danger');
+          btn.disabled = false;
+        }
+      } catch (e) {
+        showToast('Ошибка соединения ❌', 'danger');
+        btn.disabled = false;
+      }
+    });
+  });
+
+  // Toast-уведомления
+  function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+    toast.style.zIndex = 9999;
+    toast.innerHTML = `<div class="d-flex"><div class="toast-body fw-semibold">${msg}</div></div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+</script>
 </body>
 </html>
