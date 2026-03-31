@@ -15,10 +15,10 @@
 ## 📸 Скриншоты
 
 ### Telegram-бот
-![Бот](screenshots/bot.png)
+![Бот](assets/bot.png)
 
 ### Веб-дашборд
-![Дашборд](screenshots/dashboard.png)
+![Дашборд](assets/dashboard.png)
 
 ## ✨ Фичи
 
