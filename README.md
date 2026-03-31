@@ -12,6 +12,14 @@
 
 ---
 
+## 📸 Скриншоты
+
+### Telegram-бот
+![Бот](screenshots/bot.png)
+
+### Веб-дашборд
+![Дашборд](screenshots/dashboard.png)
+
 ## ✨ Фичи
 
 | Возможность | Детали |
